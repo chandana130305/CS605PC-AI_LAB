@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Python using HTML</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2025.11.2/core.css">
+    <script type="module" src="https://pyscript.net/releases/2025.11.2/core.js"></script>
+    <style>
+        
+       .box{
+            border: 2px solid #333;      
+            padding: 15px;             
+            margin: 20px ;              
+            border-radius: 8px;           
+            color: blue;                 
+        }
+	  h1 {
+    		text-align: center;
+  	}
+
+    </style>
+</head>
+<body>
+    <h1>Python with HTML</h1>
+	<div id = "b1" class="box">
+    		<py-script>
+			from pyscript import display
+			display("Hello" , target="b1")
+		</py-script>
+	</div>
+	<div id = "b2" class="box">
+   		<py-script>
+			for i in range(1, 10, 2):
+   			 display(i,target="b2")
+    		</py-script>
+   	 </div>
+
+</body>
+</html>
