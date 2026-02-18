@@ -1,0 +1,210 @@
+<!DOCTYPE HTML>
+<HTML>
+	<HEAD>
+		<title>TIC TAC TOE GAME</title>
+		<link rel="stylesheet" href="https://pyscript.net/releases/2025.8.1/core.css" />
+    		<script type="module" src="https://pyscript.net/releases/2025.8.1/core.js"></script>
+	</HEAD>
+
+	<body>
+		<div>
+<py-script>
+from pyscript import display
+from collections import deque
+from js import document
+import random
+
+# ---------------- Node ----------------
+class Node:
+    def __init__(self, state, parent=None, action=None):
+        self.state = state
+        self.parent = parent
+        self.action = action
+
+    def path(self):
+        node = self
+        path_back = []
+        while node:
+            path_back.append(node)
+            node = node.parent
+        return list(reversed(path_back))
+
+# ---------------- Problem ----------------
+class Problem:
+    def __init__(self, initial):
+        self.initial = initial
+
+    def actions(self, state):
+        raise NotImplementedError
+
+    def result(self, state, action):
+        raise NotImplementedError
+
+    def is_goal(self, state):
+        raise NotImplementedError
+
+    def expand(self, node):
+        children = []
+        for action in self.actions(node.state):
+            new_state = self.result(node.state, action)
+            children.append(Node(new_state, node, action))
+        return children
+
+# ---------------- TicTacToeProblem ----------------
+class TicTacToeProblem(Problem):
+    def __init__(self, initial, player='X'):
+        super().__init__(initial)
+        self.player = player
+
+    def actions(self, state):
+        return [i for i, c in enumerate(state) if c == ' ']
+
+    def result(self, state, action):
+        new_state = list(state)
+        new_state[action] = self.player
+        return new_state
+
+    def is_goal(self, state):
+        wins = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6]
+        ]
+        return any(state[a]==state[b]==state[c]=='X' for a,b,c in wins)
+
+# ---------------- BFS ----------------
+def breadth_first_search(problem):
+    node = Node(problem.initial)
+    if problem.is_goal(node.state):
+        return node
+    frontier = deque([node])
+    reached = {tuple(node.state)}
+    while frontier:
+        node = frontier.popleft()
+        for child in problem.expand(node):
+            s = tuple(child.state)
+            if problem.is_goal(s):
+                return child
+            if s not in reached:
+                reached.add(s)
+                frontier.append(child)
+    return None
+
+# ---------------- DFS ----------------
+def depth_first_search(problem):
+    node = Node(problem.initial)
+    if problem.is_goal(node.state):
+        return node
+
+    frontier = [node]  # stack for DFS (LIFO)
+    reached = {tuple(node.state)}
+
+    while frontier:
+        node = frontier.pop()  # pop from end for DFS
+
+        for child in problem.expand(node):
+            s = tuple(child.state)
+            if problem.is_goal(s):
+                return child
+            if s not in reached:
+                reached.add(s)
+                frontier.append(child)
+
+    return None
+
+# ---------------- Winner check ----------------
+def check_winner(state, player):
+    wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ]
+    return any(state[a]==state[b]==state[c]==player for a,b,c in wins)
+
+# ---------------- HTML board display ----------------
+def print_board(state):
+    def cell(c):
+        return c if c != ' ' else '&nbsp;'
+
+    html = """
+    <table border="1" cellpadding="10"
+           style="border-collapse: collapse; text-align:center; font-size:24px;">
+      <tr>
+        <td>{0}</td><td>{1}</td><td>{2}</td>
+      </tr>
+      <tr>
+        <td>{3}</td><td>{4}</td><td>{5}</td>
+      </tr>
+      <tr>
+        <td>{6}</td><td>{7}</td><td>{8}</td>
+      </tr>
+    </table>
+    """.format(*(cell(x) for x in state))
+
+    container = document.getElementById("board-output")
+    container.innerHTML += html + "<br>"
+
+# -------------- BFS agent ------------------
+def bfs_agent(state, player='X'):
+    problem = TicTacToeProblem(state, player=player)
+    solution = breadth_first_search(problem)
+    if solution:
+        # take the first step after current
+        move_node = solution.path()[1]
+        return move_node.action
+    return None
+
+# -------------- DFS agent ------------------
+def dfs_agent(state, player='X'):
+    problem = TicTacToeProblem(state, player=player)
+    solution = depth_first_search(problem)
+    if solution:
+        # take the first step after current
+        move_node = solution.path()[1]
+        return move_node.action
+    return None
+
+# -------------- Random agent ------------------
+def random_agent(state, player='O'):
+    empty = [i for i, c in enumerate(state) if c == ' ']
+    if not empty:
+        return None
+    return random.choice(empty)
+
+#------------------- Game loop -------------------------
+def play_game(agent_X, agent_O):
+    state = [' ']*9
+    print_board(state)
+    
+    while True:
+        # X turn
+        move_X = agent_X(state, player='X')
+        if move_X is None:
+            display("Draw!")
+            break
+        state[move_X] = 'X'
+        print_board(state)
+        if check_winner(state, 'X'):
+            display("X wins!")
+            break
+        if ' ' not in state:
+            display("Draw!")
+            break
+
+        # O turn
+        move_O = agent_O(state, player='O')
+        if move_O is None:
+            display("Draw!")
+            break
+        state[move_O] = 'O'
+        print_board(state)
+        if check_winner(state, 'O'):
+            display("O wins!")
+            break
+play_game(bfs_agent, dfs_agent)
+
+</py-script>
+		</div>
+		<div id="board-output"></div>
+	</body>
+</HTML>
